@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func SlaveStartup(masterIP string) {
@@ -38,36 +41,30 @@ func StartTCPConnection(masterIP string) {
 
 	//4Eva Loop for the TCP Reading and writing
 	for {
-		//Waits for server to send stuff
 		connection.Read(bufferFileSize)
-
-		// fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
+		fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
 		connection.Read(bufferFileName)
-		// fileName := strings.Trim(string(bufferFileName), ":")
+		fileName := strings.Trim(string(bufferFileName), ":")
 
-		fmt.Println("From Server... : " + string(bufferFileName))
+		newFile, err := os.Create(fileName)
 
-		// newFile, err := os.Create(fileName)
+		if err != nil {
+			panic(err)
+		}
+		defer newFile.Close()
+		var receivedBytes int64
 
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// defer newFile.Close()
-		// var receivedBytes int64
-
-		// for {
-		// 	if (fileSize - receivedBytes) < BUFFERSIZE {
-		// 		io.CopyN(newFile, connection, (fileSize - receivedBytes))
-		// 		connection.Read(make([]byte, (receivedBytes+BUFFERSIZE)-fileSize))
-		// 		break
-		// 	}
-		// 	io.CopyN(newFile, connection, BUFFERSIZE)
-		// 	receivedBytes += BUFFERSIZE
-		// }
-		// fmt.Println("Received file completely!")
-
+		for {
+			if (fileSize - receivedBytes) < BUFFERSIZE {
+				io.CopyN(newFile, connection, (fileSize - receivedBytes))
+				connection.Read(make([]byte, (receivedBytes+BUFFERSIZE)-fileSize))
+				break
+			}
+			io.CopyN(newFile, connection, BUFFERSIZE)
+			receivedBytes += BUFFERSIZE
+		}
+		fmt.Println("Received file completely!")
 		// prepareRendering(fileName)
 		// startRendering(fileName)
 		// sendRendering(fileName)

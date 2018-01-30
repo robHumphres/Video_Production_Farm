@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -61,17 +64,46 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "%v", handler.Header)
 	fmt.Fprintf(w, "Received...")
 
-	PostToSlaves()
+	PostToSlaves(handler.Filename)
 
 }
 
-func PostToSlaves() {
+func PostToSlaves(fileame string) {
 
-	something := "This is something"
+	var number int
 
 	for i := range connections {
+
+		//Transfer the name
 		fmt.Println("Made it to connection... " + string(i))
-		connections[i].Write([]byte(fillString(something, 64)))
+
+		file, err := os.Open("exerciseTest.csv")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fileInfo, err := file.Stat()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fileSize := fillString(strconv.FormatInt(fileInfo.Size(), 10), 10)
+		fileName := fillString(string(number)+fileInfo.Name(), 64)
+		fmt.Println("Sending filename and filesize!")
+		connections[i].Write([]byte(fileSize))
+		connections[i].Write([]byte(fileName))
+		sendBuffer := make([]byte, BUFFERSIZE)
+		fmt.Println("Start sending file!")
+		for {
+			_, err = file.Read(sendBuffer)
+			if err == io.EOF {
+				break
+			}
+			connections[i].Write(sendBuffer)
+		}
+		number++
+
 	}
 }
 
