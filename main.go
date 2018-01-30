@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"os"
 )
 
@@ -60,7 +59,7 @@ func main() {
 
 // Get preferred outbound ip of this machine
 func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
+	conn, err := net.Dial("tcp", "8.8.8.8:80")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,36 +68,4 @@ func GetOutboundIP() net.IP {
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
 	return localAddr.IP
-}
-
-func UploadFile(w http.ResponseWriter, r *http.Request) {
-	// //Post uploads a single file
-	// if r.Method == "POST" {
-	// 	file, handler, err := r.FormFile("file")
-	// 	fmt.Printf("Post came through\n")
-	// 	defer file.Close()
-
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return
-	// 	}
-
-	// 	fmt.Fprintf(w, "%v", handler.Header)
-	// 	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return
-	// 	}
-
-	// 	defer f.Close()
-	// 	io.Copy(f, file)
-
-	// 	//Delete older ones if past 10
-	// 	UnzipNClean(handler.Filename)
-
-	// } else {
-	// 	fmt.Fprintf(w, "This is just a POST Method, see documentation")
-	// }
-
-	// return
 }

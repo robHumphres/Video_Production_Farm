@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"os"
-	"strconv"
-	"strings"
 )
 
 func SlaveStartup(masterIP string) {
@@ -35,7 +32,8 @@ func StartTCPConnection(masterIP string) {
 		fmt.Println("Master is not online....")
 		panic(err)
 	}
-	fmt.Println("Connected to master.... Now waiting for files to render")
+	fmt.Println("Connected to master.... Now waiting for files to render\n")
+
 	defer connection.Close()
 
 	//4Eva Loop for the TCP Reading and writing
@@ -43,34 +41,36 @@ func StartTCPConnection(masterIP string) {
 		//Waits for server to send stuff
 		connection.Read(bufferFileSize)
 
-		fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
+		// fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
 		connection.Read(bufferFileName)
-		fileName := strings.Trim(string(bufferFileName), ":")
+		// fileName := strings.Trim(string(bufferFileName), ":")
 
-		newFile, err := os.Create(fileName)
+		fmt.Println("From Server... : " + string(bufferFileName))
 
-		if err != nil {
-			panic(err)
-		}
-		
-		defer newFile.Close()
-		var receivedBytes int64
+		// newFile, err := os.Create(fileName)
 
-		for {
-			if (fileSize - receivedBytes) < BUFFERSIZE {
-				io.CopyN(newFile, connection, (fileSize - receivedBytes))
-				connection.Read(make([]byte, (receivedBytes+BUFFERSIZE)-fileSize))
-				break
-			}
-			io.CopyN(newFile, connection, BUFFERSIZE)
-			receivedBytes += BUFFERSIZE
-		}
-		fmt.Println("Received file completely!")
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		prepareRendering(fileName)
-		startRendering(fileName)
-		sendRendering(fileName)
+		// defer newFile.Close()
+		// var receivedBytes int64
+
+		// for {
+		// 	if (fileSize - receivedBytes) < BUFFERSIZE {
+		// 		io.CopyN(newFile, connection, (fileSize - receivedBytes))
+		// 		connection.Read(make([]byte, (receivedBytes+BUFFERSIZE)-fileSize))
+		// 		break
+		// 	}
+		// 	io.CopyN(newFile, connection, BUFFERSIZE)
+		// 	receivedBytes += BUFFERSIZE
+		// }
+		// fmt.Println("Received file completely!")
+
+		// prepareRendering(fileName)
+		// startRendering(fileName)
+		// sendRendering(fileName)
 	}
 
 }

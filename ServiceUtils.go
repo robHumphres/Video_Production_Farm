@@ -11,6 +11,18 @@ import (
 	"github.com/mholt/archiver"
 )
 
+func fillString(retunString string, toLength int) string {
+	for {
+		lengtString := len(retunString)
+		if lengtString < toLength {
+			retunString = retunString + ":"
+			continue
+		}
+		break
+	}
+	return retunString
+}
+
 func Unzip(src, dest string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {

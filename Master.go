@@ -18,6 +18,7 @@ func MasterStartup() {
 	// fmt.Println(ipAddresses)
 	go startMasterTCPServer()
 
+	//Start Rest Server
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/upload", UploadFile)
 	log.Fatal(http.ListenAndServe(":9000", router))
@@ -25,24 +26,81 @@ func MasterStartup() {
 
 func startMasterTCPServer() {
 
-	ln, _ := net.Listen("tcp", ":27000")
+	server, _ := net.Listen("tcp", ":27000")
+
+	defer server.Close()
 
 	for {
-		// listen on all interfaces
 
 		// accept any connection on port 27000
-		conn, _ := ln.Accept()
-		connections = append(connections, conn)
-		fmt.Println("recevied a connection")
-		// run loop forever (or until ctrl-c)
-		// will listen for message to process ending in newline (\n)
-		// message, _ := bufio.NewReader(conn).ReadString('\n')
-		// output message received
-		// fmt.Print("Message Received:", string(message))
-		// sample process for string received
-		newmessage := "Connected to Master...."
+		conn, err := server.Accept()
 
-		// send new string back to client
-		conn.Write([]byte(newmessage + "\n"))
+		if err != nil {
+			panic(err)
+		}
+
+		connections = append(connections, conn)
+		fmt.Println("Received a connection from.. " + conn.RemoteAddr().String())
 	}
 }
+
+func UploadFile(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("Recieved request from postman")
+	file, handler, err := r.FormFile("file")
+	fmt.Printf("Post came through\n")
+	defer file.Close()
+
+	fmt.Println("File name is... " + handler.Filename)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// fmt.Fprintf(w, "%v", handler.Header)
+	fmt.Fprintf(w, "Received...")
+
+	PostToSlaves()
+
+}
+
+func PostToSlaves() {
+
+	something := "This is something"
+
+	for i := range connections {
+		fmt.Println("Made it to connection... " + string(i))
+		connections[i].Write([]byte(fillString(something, 64)))
+	}
+}
+
+// //Post uploads a single file
+// if r.Method == "POST" {
+// 	file, handler, err := r.FormFile("file")
+// 	fmt.Printf("Post came through\n")
+// 	defer file.Close()
+
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return
+// 	}
+
+// 	fmt.Fprintf(w, "%v", handler.Header)
+// 	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return
+// 	}
+
+// 	defer f.Close()
+// 	io.Copy(f, file)
+
+// 	//Delete older ones if past 10
+// 	UnzipNClean(handler.Filename)
+
+// } else {
+// 	fmt.Fprintf(w, "This is just a POST Method, see documentation")
+// }
+
+// return
