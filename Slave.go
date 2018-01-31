@@ -3,32 +3,33 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
 
-func SlaveStartup(masterIP string) {
-	fmt.Println("It's a slave")
+var pythonScriptName string
+var masterConnection net.Conn
+
+// SlaveStartup basic function tells what's the master ip you set, and the python script being used starts TCP Connection
+func SlaveStartup(masterIP string, pythonScript string) {
+	fmt.Println("It's a Slave! :o")
 
 	//don't like seeing the red line
-	fmt.Println("Master ip in slave:" + masterIP)
+	fmt.Println("Master ip in slave: " + masterIP)
+	fmt.Println("Python script being used... " + pythonScript)
 
-	if len(os.Args) < 2 {
-		fmt.Println("Not enough Arguments are supplied... Must specific Master IP")
-		os.Exit(-1)
-	}
-
-	fmt.Println("Start tcp slace with : " + masterIP)
-
+	pythonScriptName = pythonScript
 	StartTCPConnection(masterIP)
 
 }
 
+// StartTCPConnection Tries to connect to Master, Waits for Master to Send out File, and then calls Render Function
 func StartTCPConnection(masterIP string) {
 
-	fmt.Println("slave connecting too... " + masterIP)
 	connection, err := net.Dial("tcp", masterIP)
 
 	if err != nil {
@@ -56,6 +57,7 @@ func StartTCPConnection(masterIP string) {
 		var receivedBytes int64
 
 		for {
+
 			if (fileSize - receivedBytes) < BUFFERSIZE {
 				io.CopyN(newFile, connection, (fileSize - receivedBytes))
 				connection.Read(make([]byte, (receivedBytes+BUFFERSIZE)-fileSize))
@@ -65,9 +67,27 @@ func StartTCPConnection(masterIP string) {
 			receivedBytes += BUFFERSIZE
 		}
 		fmt.Println("Received file completely ! " + fileName)
-		// prepareRendering(fileName)
-		// startRendering(fileName)
-		// sendRendering(fileName)
+		// renderFile()
 	}
 
+}
+
+// renderFile takes the file given from the Master, calls script with parameters and then calls SendRenderedFile
+func renderFile() {
+	/*
+		- Figure what flags are needed for maya to render
+		- Call Global Var for what script to run
+
+	*/
+
+	//TODO: Need to know what
+	//Calls Script
+	cmd := exec.Command(pythonScriptName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	log.Println(cmd.Run())
+}
+
+func sendRenderedFile() {
+	masterConnection.Write([]byte("something random"))
 }

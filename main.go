@@ -39,22 +39,35 @@ const BUFFERSIZE = 1024
 
 func main() {
 
-	masterOrSlave := os.Args[1]
 	if len(os.Args) > 1 {
+		masterOrSlave := os.Args[1]
 		if masterOrSlave == "Master" {
 			MasterStartup()
 		} else {
-			SlaveStartup(os.Args[2])
+			if len(os.Args) > 2 {
+				SlaveStartup(os.Args[2], os.Args[3])
+			} else {
+				fmt.Println("Not enough Arguments are supplied... Must specific Master IP")
+				os.Exit(-1)
+			}
 		}
 
 	} else {
-		fmt.Println("Error... Haven't supplied the right amount of argments\n" +
-			"Args are as followed...\n" +
-			"Master or Slave\n" +
-			"If Master supply IP Addresses... as so 192.xxx.xx0 192.xxx.xx1 192.xxx.xx2\n" +
-			"")
+		StartupMenu()
 	}
 
+}
+
+// "Arg [2] Total amount of frames need to render\n" +
+
+//StartupMenu print menu
+func StartupMenu() {
+	fmt.Println("Error... Haven't supplied the right amount of argments\n" +
+		"Args are as followed...\n" +
+		"\n\nArg [1] Master or Slave\n\n" +
+		"\n-------- IF SLAVE --------------\n" +
+		"Arg [2] If Slave supply Master IP Address& port:27000\n" +
+		"Arg [3] Python Script Name to Run command")
 }
 
 // Get preferred outbound ip of this machine

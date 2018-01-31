@@ -8,13 +8,17 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
 var connections []net.Conn
+var fileNamePOST string
+var sendBuffer []byte
 
+//MasterStartup Starts the Master TCP Server and REST API
 func MasterStartup() {
 	// //all the parameters after master are ip addresses
 	// ipAddresses := os.Args[2:]
@@ -28,6 +32,7 @@ func MasterStartup() {
 	log.Fatal(http.ListenAndServe(":9000", router))
 }
 
+//startMasterTCPServer starts the tcp listener for slaves to connect to
 func startMasterTCPServer() {
 
 	server, _ := net.Listen("tcp", ":27000")
@@ -48,6 +53,7 @@ func startMasterTCPServer() {
 	}
 }
 
+//UploadFile REST API Function that only allows POST Methods, Then send out to slaves for rendering
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Recieved POST")
@@ -75,14 +81,14 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 	io.Copy(f, file)
 
-	PostToSlaves(handler.Filename)
+	fileNamePOST = handler.Filename
+
+	PostToSlaves()
 
 }
 
 //PostToSlaves is what's used to post to multiple slaves for rendering *Needs to figure out rendering*
-func PostToSlaves(fileame string) {
-
-	var number int
+func PostToSlaves() {
 
 	//Needs some time for the file to set from post
 	time.Sleep(5 * time.Second)
@@ -92,7 +98,7 @@ func PostToSlaves(fileame string) {
 		//Transfer the name
 		fmt.Println("Made it to connection... " + string(i))
 
-		file, err := os.Open(fileame)
+		file, err := os.Open(fileNamePOST)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -110,6 +116,8 @@ func PostToSlaves(fileame string) {
 		connections[i].Write([]byte(fileName))
 		sendBuffer := make([]byte, BUFFERSIZE)
 		fmt.Println("Start sending file!")
+
+		//Sending file
 		for {
 			_, err = file.Read(sendBuffer)
 			if err == io.EOF {
@@ -117,6 +125,22 @@ func PostToSlaves(fileame string) {
 			}
 			connections[i].Write(sendBuffer)
 		}
-		number++
+
+		fmt.Println("\nFinished sending files to slaves")
+
+		//New thread to each slave
+		go ReceiveFileFromSlave(connections[i])
+
 	}
+}
+
+//ReceiveFromSlave starts on a new thread per client
+func ReceiveFileFromSlave(conn net.Conn) {
+	var buffer []byte
+	conn.Read(buffer)
+
+	fmt.Println(strings.Trim(string(buffer), ":"))
+
+	fmt.Println("Received file from.... " + conn.RemoteAddr().String())
+
 }

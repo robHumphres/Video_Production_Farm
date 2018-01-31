@@ -108,17 +108,19 @@ func UnzipNClean(fileToUnzip string) {
 
 }
 
-func prepareRendering(file string) {
+func fileExists(path string) (bool, error) {
+	_, err := os.Stat(path)
 
-	fmt.Println("Unzipping the file.... " + file)
-	// UnzipNClean(file)
-	//Do I need to clean the file name of .zip?
-}
+	//No error
+	if err == nil {
+		return true, nil
+	}
 
-func startRendering(file string) {
+	//Doesn't exist
+	if os.IsNotExist(err) {
+		return false, nil
+	}
 
-}
-
-func sendRendering(file string) {
-
+	//else return true
+	return true, err
 }
