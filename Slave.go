@@ -64,7 +64,7 @@ func StartTCPConnection(masterIP string) {
 			io.CopyN(newFile, connection, BUFFERSIZE)
 			receivedBytes += BUFFERSIZE
 		}
-		fmt.Println("Received file completely!")
+		fmt.Println("Received file completely ! " + fileName)
 		// prepareRendering(fileName)
 		// startRendering(fileName)
 		// sendRendering(fileName)

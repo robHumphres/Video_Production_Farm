@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -49,9 +50,8 @@ func startMasterTCPServer() {
 
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("Recieved request from postman")
+	fmt.Println("Recieved POST")
 	file, handler, err := r.FormFile("file")
-	fmt.Printf("Post came through\n")
 	defer file.Close()
 
 	fmt.Println("File name is... " + handler.Filename)
@@ -64,20 +64,35 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "%v", handler.Header)
 	fmt.Fprintf(w, "Received...")
 
+	//Create the file
+	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer f.Close()
+	io.Copy(f, file)
+
 	PostToSlaves(handler.Filename)
 
 }
 
+//PostToSlaves is what's used to post to multiple slaves for rendering *Needs to figure out rendering*
 func PostToSlaves(fileame string) {
 
 	var number int
+
+	//Needs some time for the file to set from post
+	time.Sleep(5 * time.Second)
 
 	for i := range connections {
 
 		//Transfer the name
 		fmt.Println("Made it to connection... " + string(i))
 
-		file, err := os.Open("exerciseTest.csv")
+		file, err := os.Open(fileame)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -89,7 +104,7 @@ func PostToSlaves(fileame string) {
 		}
 
 		fileSize := fillString(strconv.FormatInt(fileInfo.Size(), 10), 10)
-		fileName := fillString(string(number)+fileInfo.Name(), 64)
+		fileName := fillString("1"+fileInfo.Name(), 64)
 		fmt.Println("Sending filename and filesize!")
 		connections[i].Write([]byte(fileSize))
 		connections[i].Write([]byte(fileName))
@@ -103,36 +118,5 @@ func PostToSlaves(fileame string) {
 			connections[i].Write(sendBuffer)
 		}
 		number++
-
 	}
 }
-
-// //Post uploads a single file
-// if r.Method == "POST" {
-// 	file, handler, err := r.FormFile("file")
-// 	fmt.Printf("Post came through\n")
-// 	defer file.Close()
-
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
-
-// 	fmt.Fprintf(w, "%v", handler.Header)
-// 	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
-
-// 	defer f.Close()
-// 	io.Copy(f, file)
-
-// 	//Delete older ones if past 10
-// 	UnzipNClean(handler.Filename)
-
-// } else {
-// 	fmt.Fprintf(w, "This is just a POST Method, see documentation")
-// }
-
-// return
