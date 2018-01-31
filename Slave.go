@@ -18,7 +18,6 @@ var masterConnection net.Conn
 func SlaveStartup(masterIP string, pythonScript string) {
 	fmt.Println("It's a Slave! :o")
 
-	//don't like seeing the red line
 	fmt.Println("Master ip in slave: " + masterIP)
 	fmt.Println("Python script being used... " + pythonScript)
 
