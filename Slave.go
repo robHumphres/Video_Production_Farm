@@ -16,7 +16,7 @@ var masterConnection net.Conn
 
 // SlaveStartup basic function tells what's the master ip you set, and the python script being used starts TCP Connection
 func SlaveStartup(masterIP string, pythonScript string) {
-	fmt.Println("It's a Slave! :o")
+	fmt.Println("It's a Slave!")
 
 	fmt.Println("Master ip in slave: " + masterIP)
 	fmt.Println("Python script being used... " + pythonScript)

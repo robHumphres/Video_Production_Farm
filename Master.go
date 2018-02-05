@@ -128,7 +128,7 @@ func PostToSlaves() {
 
 		fmt.Println("\nFinished sending files to slaves")
 
-		//New thread to each slave
+		//New thread to per slave to listen for returning rendered file.
 		go ReceiveFileFromSlave(connections[i])
 
 	}
